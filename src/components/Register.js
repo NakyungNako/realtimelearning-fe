@@ -1,22 +1,29 @@
 import React, { useState } from "react";
 import {
-  Alert,
   Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Grid,
   IconButton,
   InputAdornment,
   Paper,
-  Snackbar,
   TextField,
 } from "@mui/material";
 import * as yup from "yup";
 import { Form, FormikProvider, useFormik } from "formik";
 import { Stack } from "@mui/system";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
+import axios from "../api/axios";
+
+const REGISTER_URL = "/api/users/register";
 
 export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
-  const [openSnack, setOpenSnack] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [message, setMessage] = useState("");
 
   const RegisterSchema = yup.object().shape({
     username: yup
@@ -51,8 +58,23 @@ export default function Register() {
       confirmPassword: "",
     },
     validationSchema: RegisterSchema,
-    onSubmit: () => {
-      setOpenSnack(true);
+    onSubmit: async () => {
+      try {
+        const response = await axios.post(REGISTER_URL, {
+          username: values.username,
+          email: values.email,
+          password: values.password,
+          confirmPassword: values.confirmPassword,
+        });
+        setMessage(JSON.stringify(response?.data.message));
+      } catch (error) {
+        if (error.response) {
+          setMessage("No server response");
+        } else if (error.request) {
+          console.log(error);
+        }
+      }
+      setOpenDialog(true);
     },
   });
 
@@ -60,14 +82,12 @@ export default function Register() {
     if (reason === "clickaway") {
       return;
     }
-    setOpenSnack(false);
-    formik.resetForm();
+    setOpenDialog(false);
     formik.setSubmitting(false);
   };
 
-  const handleReset = () => {};
-
-  const { errors, touched, handleSubmit, isSubmitting, getFieldProps } = formik;
+  const { errors, touched, values, handleSubmit, isSubmitting, getFieldProps } =
+    formik;
 
   const paperStyle = { padding: 30, width: 300 };
   return (
@@ -150,19 +170,27 @@ export default function Register() {
                 type="submit"
                 variant="contained"
                 disabled={isSubmitting}
-                onClick={handleReset}
               >
                 Submit
               </Button>
-              <Snackbar open={openSnack} onClose={handleClose}>
-                <Alert
-                  onClose={handleClose}
-                  severity="success"
-                  sx={{ width: "100%" }}
-                >
-                  This is a success message!
-                </Alert>
-              </Snackbar>
+              <Dialog
+                open={openDialog}
+                onClose={handleClose}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+              >
+                <DialogTitle id="alert-dialog-title">
+                  {"Submit Report"}
+                </DialogTitle>
+                <DialogContent>
+                  <DialogContentText id="alert-dialog-description">
+                    {message}
+                  </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={handleClose}>Okay</Button>
+                </DialogActions>
+              </Dialog>
             </Stack>
           </Form>
         </FormikProvider>
