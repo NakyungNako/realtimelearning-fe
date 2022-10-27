@@ -1,67 +1,52 @@
-import React, { useState } from "react";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import {
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
+  //   Dialog,
+  //   DialogContent,
+  //   DialogContentText,
+  //   DialogTitle,
+  FormControlLabel,
   Grid,
   IconButton,
   InputAdornment,
   Paper,
   TextField,
 } from "@mui/material";
-import * as yup from "yup";
-import { Form, FormikProvider, useFormik } from "formik";
 import { Stack } from "@mui/system";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
-import axios from "../api/axios";
 import { useMutation } from "@tanstack/react-query";
+import { Form, FormikProvider, useFormik } from "formik";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import * as yup from "yup";
+import axios from "../api/axios";
 
-const REGISTER_URL = "/api/users/register";
+const LOGIN_URL = "/api/users/login";
 
-export default function Register() {
+export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [message, setMessage] = useState("");
 
-  const RegisterSchema = yup.object().shape({
-    username: yup
-      .string()
-      .min(2, "Too Short!")
-      .max(50, "Too Long!")
-      .trim("Username cannot include leading and trailing spaces")
-      .strict(true)
-      .required("Username is required"),
-    email: yup
-      .string()
-      .email("Email must be a valid email address")
-      .required("Email is required"),
-    password: yup
-      .string()
-      .min(6, "Password minimim length is 6")
-      .trim("Password cannot include leading and trailing spaces")
-      .strict(true)
-      .required("Password is required"),
-    confirmPassword: yup
-      .string()
-      .oneOf([yup.ref("password")], "Password not matched")
-      .trim("The contact name cannot include leading and trailing spaces")
-      .strict(true)
-      .required("Required"),
+  const LoginSchema = yup.object().shape({
+    username: yup.string().required("Username is required"),
+    password: yup.string().required("Password is required"),
   });
 
   const mutation = useMutation(
     (user) =>
-      axios.post(REGISTER_URL, {
+      axios.post(LOGIN_URL, {
         username: user.username,
-        email: user.email,
         password: user.password,
-        confirmPassword: user.confirmPassword,
       }),
     {
       onSuccess: (data) => {
+        console.log(data.data);
         setMessage(data.data.message);
         setOpenDialog(true);
         mutation.reset();
@@ -77,12 +62,11 @@ export default function Register() {
   const formik = useFormik({
     initialValues: {
       username: "",
-      email: "",
       password: "",
-      confirmPassword: "",
+      remember: true,
     },
-    validationSchema: RegisterSchema,
-    onSubmit: () => {
+    validationSchema: LoginSchema,
+    onSubmit: async () => {
       mutation.mutate(values);
     },
   });
@@ -95,10 +79,8 @@ export default function Register() {
     formik.setSubmitting(false);
   };
 
-  const { errors, touched, values, handleSubmit, isSubmitting, getFieldProps } =
+  const { errors, touched, values, isSubmitting, handleSubmit, getFieldProps } =
     formik;
-
-  const paperStyle = { padding: 30, width: 300 };
   return (
     <Grid
       container
@@ -108,9 +90,9 @@ export default function Register() {
       justifyContent="center"
       style={{ minHeight: "100vh" }}
     >
-      <Paper elevation={20} style={paperStyle}>
+      <Paper elevation={20} style={{ padding: 30, width: 300 }}>
         <Grid align="center">
-          <h2>Register</h2>
+          <h2>Login</h2>
         </Grid>
         <FormikProvider value={formik}>
           <Form autoComplete="off" noValidate onSubmit={handleSubmit}>
@@ -119,17 +101,10 @@ export default function Register() {
                 fullWidth
                 label="Username"
                 placeholder="Enter your username..."
+                type="text"
                 {...getFieldProps("username")}
                 error={Boolean(touched.username && errors.username)}
                 helperText={touched.username && errors.username}
-              />
-              <TextField
-                fullWidth
-                type="email"
-                label="Email Adress"
-                {...getFieldProps("email")}
-                error={Boolean(touched.email && errors.email)}
-                helperText={touched.email && errors.email}
               />
               <TextField
                 fullWidth
@@ -151,28 +126,13 @@ export default function Register() {
                 error={Boolean(touched.password && errors.password)}
                 helperText={touched.password && errors.password}
               />
-              <TextField
-                fullWidth
-                type={showPassword ? "text" : "password"}
-                label="Confirm Password"
-                {...getFieldProps("confirmPassword")}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        edge="end"
-                        onClick={() => setShowPassword((prev) => !prev)}
-                      >
-                        {showPassword ? <Visibility /> : <VisibilityOff />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                error={Boolean(
-                  touched.confirmPassword && errors.confirmPassword
-                )}
-                helperText={touched.confirmPassword && errors.confirmPassword}
-              />
+              <Stack>
+                <FormControlLabel
+                  control={<Checkbox {...getFieldProps("remember")} />}
+                  label="Remember me"
+                />
+                <Link>Forgot password?</Link>
+              </Stack>
               <Button
                 fullWidth
                 size="large"
@@ -180,7 +140,7 @@ export default function Register() {
                 variant="contained"
                 disabled={isSubmitting}
               >
-                Submit
+                Log in
               </Button>
               <Dialog
                 open={openDialog}
