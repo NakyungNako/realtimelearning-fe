@@ -66,7 +66,7 @@ export default function Login() {
       remember: true,
     },
     validationSchema: LoginSchema,
-    onSubmit: async () => {
+    onSubmit: () => {
       mutation.mutate(values);
     },
   });
