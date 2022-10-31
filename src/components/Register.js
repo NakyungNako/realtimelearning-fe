@@ -18,6 +18,7 @@ import { Stack } from "@mui/system";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import axios from "../api/axios";
 import { useMutation } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 
 const REGISTER_URL = "/api/users/register";
 
@@ -182,6 +183,9 @@ export default function Register() {
               >
                 Submit
               </Button>
+              <Grid container justifyContent="center">
+                Already register?<Link to="/login">Login</Link>
+              </Grid>
               <Dialog
                 open={openDialog}
                 onClose={handleClose}

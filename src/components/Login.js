@@ -142,6 +142,9 @@ export default function Login() {
               >
                 Log in
               </Button>
+              <Grid container justifyContent="center">
+                Not have account?<Link to="/signup">Register</Link>
+              </Grid>
               <Dialog
                 open={openDialog}
                 onClose={handleClose}
