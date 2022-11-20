@@ -22,7 +22,8 @@ import { Stack } from "@mui/system";
 import { useMutation } from "@tanstack/react-query";
 import { Form, FormikProvider, useFormik } from "formik";
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import useAuth from "../hooks/useAuth";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import * as yup from "yup";
 import axios from "../api/axios";
 
@@ -32,6 +33,10 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [message, setMessage] = useState("");
+  const { setAuth, auth } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/";
 
   const LoginSchema = yup.object().shape({
     username: yup.string().required("Username is required"),
@@ -40,13 +45,25 @@ export default function Login() {
 
   const mutation = useMutation(
     (user) =>
-      axios.post(LOGIN_URL, {
-        username: user.username,
-        password: user.password,
-      }),
+      axios.post(
+        LOGIN_URL,
+        {
+          username: user.username,
+          password: user.password,
+        },
+        {
+          withCredentials: true,
+        }
+      ),
     {
       onSuccess: (data) => {
+        const accessToken = data.data.token;
+        const id = data.data.id;
+        const username = data.data.username;
         console.log(data.data);
+        setAuth({ id, username, accessToken });
+        console.log("id", auth.id);
+        console.log("username", auth.username);
         setMessage(data.data.message);
         setOpenDialog(true);
         mutation.reset();
@@ -77,6 +94,7 @@ export default function Login() {
     }
     setOpenDialog(false);
     formik.setSubmitting(false);
+    navigate(from, { replace: true });
   };
 
   const { errors, touched, values, isSubmitting, handleSubmit, getFieldProps } =

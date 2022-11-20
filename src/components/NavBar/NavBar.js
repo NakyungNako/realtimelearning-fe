@@ -12,6 +12,9 @@ export default function NavBar() {
               Registration
             </Link>
           </Typography>
+          <Link to={"/home"} style={{ textDecoration: "none", color: "white" }}>
+            <Button color="inherit">Home</Button>
+          </Link>
           <Link
             to={"/login"}
             style={{ textDecoration: "none", color: "white" }}
