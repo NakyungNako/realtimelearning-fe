@@ -54,12 +54,13 @@ export default function Register() {
   });
 
   const mutation = useMutation(
-    (user) => axios.post(REGISTER_URL, {
-      username: user.username,
-      email: user.email,
-      password: user.password,
-      confirmPassword: user.confirmPassword,
-    }),
+    (user) =>
+      axios.post(REGISTER_URL, {
+        username: user.username,
+        email: user.email,
+        password: user.password,
+        confirmPassword: user.confirmPassword,
+      }),
     {
       onSuccess: (data) => {
         setMessage(data.data.message);
@@ -71,7 +72,7 @@ export default function Register() {
         setOpenDialog(true);
         mutation.reset();
       },
-    },
+    }
   );
 
   const formik = useFormik({
@@ -96,9 +97,8 @@ export default function Register() {
     formik.setSubmitting(false);
   };
 
-  const {
-    errors, touched, values, handleSubmit, isSubmitting, getFieldProps,
-  } = formik;
+  const { errors, touched, values, handleSubmit, isSubmitting, getFieldProps } =
+    formik;
 
   const paperStyle = { padding: 30, width: 300 };
   return (
@@ -171,7 +171,7 @@ export default function Register() {
                   ),
                 }}
                 error={Boolean(
-                  touched.confirmPassword && errors.confirmPassword,
+                  touched.confirmPassword && errors.confirmPassword
                 )}
                 helperText={touched.confirmPassword && errors.confirmPassword}
               />

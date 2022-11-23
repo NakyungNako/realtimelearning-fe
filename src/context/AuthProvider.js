@@ -6,14 +6,18 @@ const AuthContext = createContext({});
 export function AuthProvider({ children }) {
   const [auth, setAuth] = useState({});
   const [persist, setPersist] = useState(
-    JSON.parse(localStorage.getItem("persist")) || false,
+    JSON.parse(localStorage.getItem("persist")) || false
   );
 
   return (
-    // eslint-disable-next-line react/jsx-no-constructed-context-values
-    <AuthContext.Provider value={{
-      auth, setAuth, persist, setPersist,
-    }}
+    <AuthContext.Provider
+      // eslint-disable-next-line react/jsx-no-constructed-context-values
+      value={{
+        auth,
+        setAuth,
+        persist,
+        setPersist,
+      }}
     >
       {children}
     </AuthContext.Provider>

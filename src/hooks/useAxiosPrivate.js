@@ -16,7 +16,7 @@ export default function useAxiosPrivate() {
         }
         return config;
       },
-      (error) => Promise.reject(error),
+      (error) => Promise.reject(error)
     );
 
     const responseIntercept = axiosPrivate.interceptors.response.use(
@@ -38,7 +38,7 @@ export default function useAxiosPrivate() {
           });
         }
         return Promise.reject(error);
-      },
+      }
     );
     return () => {
       axiosPrivate.interceptors.request.eject(requestIntercept);

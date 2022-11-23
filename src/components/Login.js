@@ -44,16 +44,17 @@ export default function Login() {
   });
 
   const mutation = useMutation(
-    (user) => axios.post(
-      LOGIN_URL,
-      {
-        username: user.username,
-        password: user.password,
-      },
-      {
-        withCredentials: true,
-      },
-    ),
+    (user) =>
+      axios.post(
+        LOGIN_URL,
+        {
+          username: user.username,
+          password: user.password,
+        },
+        {
+          withCredentials: true,
+        }
+      ),
     {
       onSuccess: (data) => {
         const accessToken = data.data.token;
@@ -70,7 +71,7 @@ export default function Login() {
         setOpenDialog(true);
         mutation.reset();
       },
-    },
+    }
   );
 
   const formik = useFormik({
@@ -103,9 +104,8 @@ export default function Login() {
     localStorage.setItem("persist", persist);
   }, [persist]);
 
-  const {
-    errors, touched, values, isSubmitting, handleSubmit, getFieldProps,
-  } = formik;
+  const { errors, touched, values, isSubmitting, handleSubmit, getFieldProps } =
+    formik;
   return (
     <Grid
       container
