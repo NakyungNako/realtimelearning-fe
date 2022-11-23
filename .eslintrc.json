@@ -23,7 +23,6 @@
       2,
       { "allowShortCircuit": true, "allowTernary": true }
     ],
-    "linebreak-style": ["error", "windows"],
     "prettier/prettier": [
       "error",
       {
