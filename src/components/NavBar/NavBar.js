@@ -8,23 +8,14 @@ export default function NavBar() {
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            <Link to={"/"} style={{ textDecoration: "none", color: "white" }}>
+            <Link to="/" style={{ textDecoration: "none", color: "white" }}>
               Registration
             </Link>
           </Typography>
-          <Link to={"/home"} style={{ textDecoration: "none", color: "white" }}>
-            <Button color="inherit">Home</Button>
-          </Link>
-          <Link
-            to={"/login"}
-            style={{ textDecoration: "none", color: "white" }}
-          >
+          <Link to="/login" style={{ textDecoration: "none", color: "white" }}>
             <Button color="inherit">Login</Button>
           </Link>
-          <Link
-            to={"/signup"}
-            style={{ textDecoration: "none", color: "white" }}
-          >
+          <Link to="/signup" style={{ textDecoration: "none", color: "white" }}>
             <Button color="inherit">Signup</Button>
           </Link>
         </Toolbar>

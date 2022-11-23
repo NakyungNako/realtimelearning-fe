@@ -10,7 +10,11 @@ export default function useRefreshToken() {
     setAuth((prev) => {
       console.log(JSON.stringify(prev));
       console.log(response.data);
-      return { ...prev, accessToken: response.data.token };
+      return {
+        ...prev,
+        username: response.data.username,
+        accessToken: response.data.token,
+      };
     });
     return response.data.token;
   };

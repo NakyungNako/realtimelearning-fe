@@ -16,9 +16,9 @@ import * as yup from "yup";
 import { Form, FormikProvider, useFormik } from "formik";
 import { Stack } from "@mui/system";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import axios from "../api/axios";
 import { useMutation } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import axios from "../api/axios";
 
 const REGISTER_URL = "/api/users/register";
 
@@ -84,6 +84,7 @@ export default function Register() {
     },
     validationSchema: RegisterSchema,
     onSubmit: () => {
+      // eslint-disable-next-line no-use-before-define
       mutation.mutate(values);
     },
   });
@@ -184,7 +185,8 @@ export default function Register() {
                 Submit
               </Button>
               <Grid container justifyContent="center">
-                Already register?<Link to="/login">Login</Link>
+                Already register?
+                <Link to="/login">Login</Link>
               </Grid>
               <Dialog
                 open={openDialog}
@@ -192,9 +194,7 @@ export default function Register() {
                 aria-labelledby="alert-dialog-title"
                 aria-describedby="alert-dialog-description"
               >
-                <DialogTitle id="alert-dialog-title">
-                  {"Submit Report"}
-                </DialogTitle>
+                <DialogTitle id="alert-dialog-title">Submit Report</DialogTitle>
                 <DialogContent>
                   <DialogContentText id="alert-dialog-description">
                     {message}
