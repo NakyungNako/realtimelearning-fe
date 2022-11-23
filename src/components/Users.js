@@ -34,6 +34,7 @@ export default function Users() {
   return (
     <List sx={{ width: "100%", maxWidth: 360, bgcolor: "background.paper" }}>
       {users.map((user) => (
+        // eslint-disable-next-line no-underscore-dangle
         <ListItem alignItems="flex-start" key={user._id}>
           <ListItemText primary={user.username} />
         </ListItem>

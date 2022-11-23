@@ -16,9 +16,9 @@ import * as yup from "yup";
 import { Form, FormikProvider, useFormik } from "formik";
 import { Stack } from "@mui/system";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import axios from "../api/axios";
 import { useMutation } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import axios from "../api/axios";
 
 const REGISTER_URL = "/api/users/register";
 
@@ -54,13 +54,12 @@ export default function Register() {
   });
 
   const mutation = useMutation(
-    (user) =>
-      axios.post(REGISTER_URL, {
-        username: user.username,
-        email: user.email,
-        password: user.password,
-        confirmPassword: user.confirmPassword,
-      }),
+    (user) => axios.post(REGISTER_URL, {
+      username: user.username,
+      email: user.email,
+      password: user.password,
+      confirmPassword: user.confirmPassword,
+    }),
     {
       onSuccess: (data) => {
         setMessage(data.data.message);
@@ -72,7 +71,7 @@ export default function Register() {
         setOpenDialog(true);
         mutation.reset();
       },
-    }
+    },
   );
 
   const formik = useFormik({
@@ -84,6 +83,7 @@ export default function Register() {
     },
     validationSchema: RegisterSchema,
     onSubmit: () => {
+      // eslint-disable-next-line no-use-before-define
       mutation.mutate(values);
     },
   });
@@ -96,8 +96,9 @@ export default function Register() {
     formik.setSubmitting(false);
   };
 
-  const { errors, touched, values, handleSubmit, isSubmitting, getFieldProps } =
-    formik;
+  const {
+    errors, touched, values, handleSubmit, isSubmitting, getFieldProps,
+  } = formik;
 
   const paperStyle = { padding: 30, width: 300 };
   return (
@@ -170,7 +171,7 @@ export default function Register() {
                   ),
                 }}
                 error={Boolean(
-                  touched.confirmPassword && errors.confirmPassword
+                  touched.confirmPassword && errors.confirmPassword,
                 )}
                 helperText={touched.confirmPassword && errors.confirmPassword}
               />
@@ -184,7 +185,8 @@ export default function Register() {
                 Submit
               </Button>
               <Grid container justifyContent="center">
-                Already register?<Link to="/login">Login</Link>
+                Already register?
+                <Link to="/login">Login</Link>
               </Grid>
               <Dialog
                 open={openDialog}
@@ -192,9 +194,7 @@ export default function Register() {
                 aria-labelledby="alert-dialog-title"
                 aria-describedby="alert-dialog-description"
               >
-                <DialogTitle id="alert-dialog-title">
-                  {"Submit Report"}
-                </DialogTitle>
+                <DialogTitle id="alert-dialog-title">Submit Report</DialogTitle>
                 <DialogContent>
                   <DialogContentText id="alert-dialog-description">
                     {message}

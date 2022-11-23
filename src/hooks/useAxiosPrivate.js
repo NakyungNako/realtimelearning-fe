@@ -1,5 +1,5 @@
-import { axiosPrivate } from "../api/axios";
 import { useEffect } from "react";
+import { axiosPrivate } from "../api/axios";
 import useRefreshToken from "./useRefreshToken";
 import useAuth from "./useAuth";
 
@@ -10,12 +10,13 @@ export default function useAxiosPrivate() {
   useEffect(() => {
     const requestIntercept = axiosPrivate.interceptors.request.use(
       (config) => {
-        if (!config.headers["Authorization"]) {
-          config.headers["Authorization"] = `Bearer ${auth.accessToken}`;
+        if (!config.headers.Authorization) {
+          // eslint-disable-next-line no-param-reassign
+          config.headers.Authorization = `Bearer ${auth.accessToken}`;
         }
         return config;
       },
-      (error) => Promise.reject(error)
+      (error) => Promise.reject(error),
     );
 
     const responseIntercept = axiosPrivate.interceptors.response.use(
@@ -24,7 +25,8 @@ export default function useAxiosPrivate() {
         const prevRequest = error?.config;
         if (error.code === "ERR_CANCELED") {
           return Promise.resolve({ status: 499 });
-        } else if (error?.response?.status === 401 && !prevRequest?.sent) {
+        }
+        if (error?.response?.status === 401 && !prevRequest?.sent) {
           const newAccessToken = await refresh();
           return axiosPrivate({
             ...prevRequest,
@@ -36,7 +38,7 @@ export default function useAxiosPrivate() {
           });
         }
         return Promise.reject(error);
-      }
+      },
     );
     return () => {
       axiosPrivate.interceptors.request.eject(requestIntercept);

@@ -21,10 +21,10 @@ import {
 import { Stack } from "@mui/system";
 import { useMutation } from "@tanstack/react-query";
 import { Form, FormikProvider, useFormik } from "formik";
-import React, { useState } from "react";
-import useAuth from "../hooks/useAuth";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import * as yup from "yup";
+import useAuth from "../hooks/useAuth";
 import axios from "../api/axios";
 
 const LOGIN_URL = "/api/users/login";
@@ -33,7 +33,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [message, setMessage] = useState("");
-  const { setAuth, auth } = useAuth();
+  const { setAuth, persist, setPersist } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || "/";
@@ -44,26 +44,23 @@ export default function Login() {
   });
 
   const mutation = useMutation(
-    (user) =>
-      axios.post(
-        LOGIN_URL,
-        {
-          username: user.username,
-          password: user.password,
-        },
-        {
-          withCredentials: true,
-        }
-      ),
+    (user) => axios.post(
+      LOGIN_URL,
+      {
+        username: user.username,
+        password: user.password,
+      },
+      {
+        withCredentials: true,
+      },
+    ),
     {
       onSuccess: (data) => {
         const accessToken = data.data.token;
-        const id = data.data.id;
-        const username = data.data.username;
+        const { id } = data.data;
+        const { username } = data.data;
         console.log(data.data);
         setAuth({ id, username, accessToken });
-        console.log("id", auth.id);
-        console.log("username", auth.username);
         setMessage(data.data.message);
         setOpenDialog(true);
         mutation.reset();
@@ -73,7 +70,7 @@ export default function Login() {
         setOpenDialog(true);
         mutation.reset();
       },
-    }
+    },
   );
 
   const formik = useFormik({
@@ -84,6 +81,7 @@ export default function Login() {
     },
     validationSchema: LoginSchema,
     onSubmit: () => {
+      // eslint-disable-next-line no-use-before-define
       mutation.mutate(values);
     },
   });
@@ -97,8 +95,17 @@ export default function Login() {
     navigate(from, { replace: true });
   };
 
-  const { errors, touched, values, isSubmitting, handleSubmit, getFieldProps } =
-    formik;
+  const togglePersist = () => {
+    setPersist((prev) => !prev);
+  };
+
+  useEffect(() => {
+    localStorage.setItem("persist", persist);
+  }, [persist]);
+
+  const {
+    errors, touched, values, isSubmitting, handleSubmit, getFieldProps,
+  } = formik;
   return (
     <Grid
       container
@@ -146,10 +153,12 @@ export default function Login() {
               />
               <Stack>
                 <FormControlLabel
-                  control={<Checkbox {...getFieldProps("remember")} />}
+                  control={
+                    <Checkbox onChange={togglePersist} checked={persist} />
+                  }
                   label="Remember me"
                 />
-                <Link>Forgot password?</Link>
+                {/* <Link>Forgot password?</Link> */}
               </Stack>
               <Button
                 fullWidth
@@ -161,7 +170,8 @@ export default function Login() {
                 Log in
               </Button>
               <Grid container justifyContent="center">
-                Not have account?<Link to="/signup">Register</Link>
+                Not have account?
+                <Link to="/signup">Register</Link>
               </Grid>
               <Dialog
                 open={openDialog}
@@ -169,9 +179,7 @@ export default function Login() {
                 aria-labelledby="alert-dialog-title"
                 aria-describedby="alert-dialog-description"
               >
-                <DialogTitle id="alert-dialog-title">
-                  {"Submit Report"}
-                </DialogTitle>
+                <DialogTitle id="alert-dialog-title">Submit Report</DialogTitle>
                 <DialogContent>
                   <DialogContentText id="alert-dialog-description">
                     {message}
