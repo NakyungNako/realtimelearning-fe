@@ -9,7 +9,7 @@ export default function Home() {
   };
   return (
     <Grid container direction="column" alignItems="center">
-      <h2>THIS IS HOME!</h2>
+      <h1>THIS IS HOME!</h1>
       <Button onClick={handleClick}>Users List</Button>
     </Grid>
   );
