@@ -5,12 +5,12 @@ import { useNavigate } from "react-router-dom";
 export default function Home() {
   const navigate = useNavigate();
   const handleClick = () => {
-    navigate("/users", { replace: true });
+    navigate("/main", { replace: true });
   };
   return (
     <Grid container direction="column" alignItems="center">
       <h1>THIS IS HOME!</h1>
-      <Button onClick={handleClick}>Users List</Button>
+      <Button onClick={handleClick}>Go to Main Page</Button>
     </Grid>
   );
 }

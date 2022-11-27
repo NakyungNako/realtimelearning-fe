@@ -17,6 +17,7 @@ import {
   InputAdornment,
   Paper,
   TextField,
+  Typography,
 } from "@mui/material";
 import { Stack } from "@mui/system";
 import { useMutation } from "@tanstack/react-query";
@@ -116,8 +117,8 @@ export default function Login() {
       style={{ minHeight: "100vh" }}
     >
       <Paper elevation={20} style={{ padding: 30, width: 300 }}>
-        <Grid align="center">
-          <h2>Login</h2>
+        <Grid align="center" marginBottom={5}>
+          <Typography variant="h5">Welcome, buddy!</Typography>
         </Grid>
         <FormikProvider value={formik}>
           <Form autoComplete="off" noValidate onSubmit={handleSubmit}>

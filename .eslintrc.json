@@ -16,6 +16,7 @@
   "plugins": ["react", "prettier"],
   "rules": {
     "quotes": ["error", "double"],
+    "no-underscore-dangle": [0],
     "react/react-in-jsx-scope": ["off"],
     "react/jsx-props-no-spreading": ["off"],
     "react/jsx-filename-extension": [1, { "extensions": [".js", ".jsx"] }],
