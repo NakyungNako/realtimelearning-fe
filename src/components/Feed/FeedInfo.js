@@ -25,6 +25,7 @@ import {
   DialogContentText,
   DialogTitle,
   Button,
+  TextField,
 } from "@mui/material";
 import { useState } from "react";
 import _ from "lodash";
@@ -36,6 +37,8 @@ export default function FeedInfo() {
   const axiosPrivate = useAxiosPrivate();
   const updateGroup = useGroup();
   const [openDialog, setOpenDialog] = useState(false);
+  const [openProfile, setOpenProfile] = useState(false);
+  const [memberProfile, setMemberProfile] = useState();
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -125,8 +128,17 @@ export default function FeedInfo() {
     updateGroup(updatedGroup);
   };
 
+  const handleProfile = (userName, userPicture) => {
+    setMemberProfile({ username: userName, picture: userPicture });
+    setOpenProfile(true);
+  };
+
   const handleCloseDialog = () => {
     setOpenDialog(false);
+  };
+
+  const handleCloseProfile = () => {
+    setOpenProfile(false);
   };
 
   return (
@@ -153,7 +165,7 @@ export default function FeedInfo() {
                 }
               >
                 <ListItemAvatar>
-                  <Avatar alt={user.avatar} />
+                  <Avatar alt={user.picture} src={user.picture} />
                 </ListItemAvatar>
                 <ListItemText primary={user.username} secondary={user.role} />
               </ListItem>
@@ -194,7 +206,9 @@ export default function FeedInfo() {
                 transformOrigin={{ horizontal: "right", vertical: "top" }}
                 anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
               >
-                <MenuItem>
+                <MenuItem
+                  onClick={() => handleProfile(user.username, user.picture)}
+                >
                   <Avatar /> Profile
                 </MenuItem>
                 {isAdmin && user._id !== auth.id && user.role !== "owner" && (
@@ -231,6 +245,35 @@ export default function FeedInfo() {
                   </MenuItem>
                 )}
               </Menu>
+              <Dialog
+                open={openProfile}
+                onClose={handleCloseProfile}
+                fullWidth
+                maxWidth="sm"
+              >
+                <DialogTitle>User Profile</DialogTitle>
+                <DialogContent>
+                  <Grid container direction="column" alignItems="center">
+                    <Avatar
+                      alt="profilepic"
+                      src={memberProfile?.picture}
+                      sx={{ width: 120, height: 120, mb: 2 }}
+                    />
+                    <Typography variant="h6">Profile Picture</Typography>
+                    <TextField
+                      disabled
+                      id="filled-disabled"
+                      label="Username"
+                      defaultValue={memberProfile?.username}
+                      variant="filled"
+                      sx={{ marginY: 2, width: 400 }}
+                    />
+                  </Grid>
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={handleCloseProfile}>Cancel</Button>
+                </DialogActions>
+              </Dialog>
             </Box>
           ))}
         </List>

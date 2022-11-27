@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import {
   Button,
@@ -7,6 +8,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Divider,
   //   Dialog,
   //   DialogContent,
   //   DialogContentText,
@@ -27,6 +29,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import * as yup from "yup";
 import useAuth from "../hooks/useAuth";
 import axios from "../api/axios";
+import { GOOGLE_CLIENT_ID } from "../config/config";
 
 const LOGIN_URL = "/api/users/login";
 
@@ -59,10 +62,9 @@ export default function Login() {
     {
       onSuccess: (data) => {
         const accessToken = data.data.token;
-        const { id } = data.data;
-        const { username } = data.data;
+        const { id, username, email } = data.data;
         console.log(data.data);
-        setAuth({ id, username, accessToken });
+        setAuth({ id, username, email, accessToken });
         setMessage(data.data.message);
         setOpenDialog(true);
         mutation.reset();
@@ -101,9 +103,40 @@ export default function Login() {
     setPersist((prev) => !prev);
   };
 
+  const handleCallbackResponse = async (response) => {
+    try {
+      const googleLogin = await axios.post("/api/users/login/google", {
+        credential: response.credential,
+      });
+      const accessToken = googleLogin.data.token;
+      const { id, username, picture, email } = googleLogin.data;
+      setAuth({ id, username, picture, email, accessToken });
+      setMessage(googleLogin.data.message);
+      setOpenDialog(true);
+    } catch (error) {
+      setMessage(error);
+      setOpenDialog(true);
+    }
+  };
+
   useEffect(() => {
     localStorage.setItem("persist", persist);
   }, [persist]);
+
+  useEffect(() => {
+    /* global google */
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleCallbackResponse,
+    });
+
+    google.accounts.id.renderButton(document.getElementById("signInDiv"), {
+      theme: "outlined",
+      text: "sigin_with",
+      size: "large",
+      width: 300,
+    });
+  }, []);
 
   const { errors, touched, values, isSubmitting, handleSubmit, getFieldProps } =
     formik;
@@ -114,7 +147,7 @@ export default function Login() {
       direction="column"
       alignItems="center"
       justifyContent="center"
-      style={{ minHeight: "100vh" }}
+      style={{ minHeight: "90vh" }}
     >
       <Paper elevation={20} style={{ padding: 30, width: 300 }}>
         <Grid align="center" marginBottom={5}>
@@ -170,6 +203,10 @@ export default function Login() {
               >
                 Log in
               </Button>
+              <Divider>OR</Divider>
+              <Grid container justifyContent="center">
+                <div id="signInDiv" />
+              </Grid>
               <Grid container justifyContent="center">
                 Not have account?
                 <Link to="/signup">Register</Link>

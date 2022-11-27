@@ -2,7 +2,6 @@ import { Route, Routes } from "react-router-dom";
 import Login from "./components/Login";
 import NavBar from "./components/NavBar/NavBar";
 import Register from "./components/Register";
-import Home from "./components/Home";
 import RequireAuth from "./components/RequireAuth";
 import NotFound from "./components/NotFound";
 import PersistLogin from "./components/PersistLogin";
@@ -30,9 +29,8 @@ function App() {
         {/* protected routes */}
         <Route element={<PersistLogin />}>
           <Route element={<RequireAuth />}>
-            <Route path="/" exact element={<Home />} />
+            <Route path="/" exact element={<Main />} />
             <Route path="/users" exact element={<Users />} />
-            <Route path="/main" exact element={<Main />} />
             <Route
               path="/joingroup/:grouptoken"
               exact

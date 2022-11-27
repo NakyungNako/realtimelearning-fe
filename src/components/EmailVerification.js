@@ -1,5 +1,4 @@
 import {
-  Box,
   Button,
   Dialog,
   Grid,
@@ -25,7 +24,6 @@ export default function EmailVerification() {
 
   useEffect(() => {
     const verifyEmailToken = async (name, emailToken) => {
-      console.log(username);
       const usernameAndToken = {
         username: name,
         emailToken,
@@ -52,21 +50,42 @@ export default function EmailVerification() {
   };
 
   return (
-    <Grid container direction="column" alignItems="center">
+    <Grid
+      container
+      spacing={0}
+      direction="column"
+      alignItems="center"
+      justifyContent="center"
+      style={{ minHeight: "90vh" }}
+    >
       {isValidToken ? (
-        <Box>
-          <Typography>
+        <Grid
+          container
+          direction="column"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <Typography variant="h5" p={1}>
             Email has been verified you can now sign in to the site
           </Typography>
-          <Button onClick={handleClick}>LOGIN</Button>
-        </Box>
+          <Button onClick={handleClick} variant="outlined">
+            LOGIN
+          </Button>
+        </Grid>
       ) : (
-        <Box>
-          <Typography>Something wrong happened, please try again</Typography>
-          <Button onClick={() => handleResend(username)}>
+        <Grid
+          container
+          direction="column"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <Typography variant="h5" p={1}>
+            Something wrong happened, please try again
+          </Typography>
+          <Button onClick={handleResend} variant="outlined">
             RESEND VERIFICATION
           </Button>
-        </Box>
+        </Grid>
       )}
       <Dialog
         open={open}
@@ -74,9 +93,7 @@ export default function EmailVerification() {
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
-        <DialogTitle id="alert-dialog-title">
-          Use Google&apos;s location service?
-        </DialogTitle>
+        <DialogTitle id="alert-dialog-title">Notification</DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
             {dialog}
