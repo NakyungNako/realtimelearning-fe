@@ -2,12 +2,13 @@ import axios from "../api/axios";
 import useAuth from "./useAuth";
 
 export default function useLogout() {
-  const { setAuth } = useAuth();
+  const { setAuth, setSelectedGroup } = useAuth();
 
   const logout = async () => {
     setAuth({});
+    setSelectedGroup();
     try {
-      await axios("/api/users/logout", {
+      await axios.get("/api/users/logout", {
         withCredentials: true,
       });
     } catch (error) {

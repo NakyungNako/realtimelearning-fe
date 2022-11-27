@@ -5,6 +5,8 @@ const AuthContext = createContext({});
 // eslint-disable-next-line react/prop-types
 export function AuthProvider({ children }) {
   const [auth, setAuth] = useState({});
+  const [selectedGroup, setSelectedGroup] = useState();
+  const [groups, setGroups] = useState();
   const [persist, setPersist] = useState(
     JSON.parse(localStorage.getItem("persist")) || false
   );
@@ -17,6 +19,10 @@ export function AuthProvider({ children }) {
         setAuth,
         persist,
         setPersist,
+        selectedGroup,
+        setSelectedGroup,
+        groups,
+        setGroups,
       }}
     >
       {children}
