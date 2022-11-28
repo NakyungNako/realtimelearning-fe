@@ -51,7 +51,7 @@ export default function JoinGroup() {
 
   const handleClose = () => {
     setOpen(false);
-    navigate("/main", { replace: true });
+    navigate("/", { replace: true });
   };
   return (
     <div>

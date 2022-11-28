@@ -81,7 +81,7 @@ export default function FeedHeader() {
         )}
         <AvatarGroup max={2}>
           {selectedGroup.users.map((user) => (
-            <Avatar alt={user.username} key={user._id} />
+            <Avatar alt={user.username} key={user._id} src={user.picture} />
           ))}
         </AvatarGroup>
       </Grid>

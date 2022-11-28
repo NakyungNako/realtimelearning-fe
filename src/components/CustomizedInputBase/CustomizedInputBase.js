@@ -1,9 +1,10 @@
 import { Paper, InputBase, Divider, IconButton, Tooltip } from "@mui/material";
 import { ContentCopy } from "@mui/icons-material";
 import PropTypes from "prop-types";
+import { JOIN_URL } from "../../config/config";
 
 export default function CustomizedInputBase({ token }) {
-  const link = `http://localhost:3000/joingroup/${token}`;
+  const link = `${JOIN_URL}${token}`;
   return (
     <Paper
       component="form"

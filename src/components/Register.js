@@ -11,6 +11,7 @@ import {
   InputAdornment,
   Paper,
   TextField,
+  Typography,
 } from "@mui/material";
 import * as yup from "yup";
 import { Form, FormikProvider, useFormik } from "formik";
@@ -108,11 +109,11 @@ export default function Register() {
       direction="column"
       alignItems="center"
       justifyContent="center"
-      style={{ minHeight: "100vh" }}
+      style={{ minHeight: "90vh" }}
     >
       <Paper elevation={20} style={paperStyle}>
-        <Grid align="center">
-          <h2>Register</h2>
+        <Grid align="center" marginBottom={3}>
+          <Typography variant="h5">Create new account</Typography>
         </Grid>
         <FormikProvider value={formik}>
           <Form autoComplete="off" noValidate onSubmit={handleSubmit}>

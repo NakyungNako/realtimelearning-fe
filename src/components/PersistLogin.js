@@ -1,3 +1,4 @@
+import { Backdrop, CircularProgress } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
@@ -30,5 +31,16 @@ export default function PersistLogin() {
   }, [isLoading]);
 
   // eslint-disable-next-line no-nested-ternary
-  return !persist ? <Outlet /> : isLoading ? <p>Loading...</p> : <Outlet />;
+  return !persist ? (
+    <Outlet />
+  ) : isLoading ? (
+    <Backdrop
+      sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+      open
+    >
+      <CircularProgress color="inherit" />
+    </Backdrop>
+  ) : (
+    <Outlet />
+  );
 }

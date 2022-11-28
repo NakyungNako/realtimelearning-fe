@@ -17,7 +17,6 @@ export default function Users() {
         const response = await axiosPrivate.get("/api/users/usernames", {
           signal: controller.signal,
         });
-        console.log(response.data);
         isMounted && setUsers(response.data);
       } catch (err) {
         console.log(err);

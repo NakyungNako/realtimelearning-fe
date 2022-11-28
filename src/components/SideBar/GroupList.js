@@ -19,6 +19,7 @@ import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 import useAuth from "../../hooks/useAuth";
 import useGroup from "../../hooks/useGroup";
 import EditCustomizedInputBase from "../CustomizedInputBase/EditCustomizedInputBase";
+import { JOIN_URL } from "../../config/config";
 
 export default function GroupList() {
   const axiosPrivate = useAxiosPrivate();
@@ -88,7 +89,8 @@ export default function GroupList() {
   };
 
   const handleJoinGroup = async (link) => {
-    const groupToken = link.substr(32, 8);
+    const joinUrlLength = JOIN_URL.length;
+    const groupToken = link.substr(joinUrlLength, 8);
     const response = await axiosPrivate.put("/api/group/add", {
       groupToken,
       userId: auth.id,
