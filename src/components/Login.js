@@ -63,7 +63,7 @@ export default function Login() {
       onSuccess: (data) => {
         const accessToken = data.data.token;
         const { id, username, email } = data.data;
-        console.log(data.data);
+        // console.log(data.data);
         setAuth({ id, username, email, accessToken });
         setMessage(data.data.message);
         setOpenDialog(true);
