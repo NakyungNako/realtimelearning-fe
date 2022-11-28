@@ -1,10 +1,15 @@
-import { Grid } from "@mui/material";
-import React from "react";
+import { Box, Divider, Stack } from "@mui/material";
+import Feed from "./Feed/Feed";
+import Sidebar from "./SideBar/SideBar";
 
 export default function Main() {
   return (
-    <Grid container direction="column" alignItems="center">
-      <h1>Welcome To My Page</h1>
-    </Grid>
+    <Box>
+      <Stack direction="row" spacing={2} justifyContent="space-between">
+        <Sidebar />
+        <Divider orientation="vertical" flexItem />
+        <Feed />
+      </Stack>
+    </Box>
   );
 }

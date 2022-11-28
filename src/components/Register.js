@@ -11,14 +11,15 @@ import {
   InputAdornment,
   Paper,
   TextField,
+  Typography,
 } from "@mui/material";
 import * as yup from "yup";
 import { Form, FormikProvider, useFormik } from "formik";
 import { Stack } from "@mui/system";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import axios from "../api/axios";
 import { useMutation } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import axios from "../api/axios";
 
 const REGISTER_URL = "/api/users/register";
 
@@ -84,6 +85,7 @@ export default function Register() {
     },
     validationSchema: RegisterSchema,
     onSubmit: () => {
+      // eslint-disable-next-line no-use-before-define
       mutation.mutate(values);
     },
   });
@@ -107,11 +109,11 @@ export default function Register() {
       direction="column"
       alignItems="center"
       justifyContent="center"
-      style={{ minHeight: "100vh" }}
+      style={{ minHeight: "90vh" }}
     >
       <Paper elevation={20} style={paperStyle}>
-        <Grid align="center">
-          <h2>Register</h2>
+        <Grid align="center" marginBottom={3}>
+          <Typography variant="h5">Create new account</Typography>
         </Grid>
         <FormikProvider value={formik}>
           <Form autoComplete="off" noValidate onSubmit={handleSubmit}>
@@ -184,7 +186,8 @@ export default function Register() {
                 Submit
               </Button>
               <Grid container justifyContent="center">
-                Already register?<Link to="/login">Login</Link>
+                Already register?
+                <Link to="/login">Login</Link>
               </Grid>
               <Dialog
                 open={openDialog}
@@ -192,9 +195,7 @@ export default function Register() {
                 aria-labelledby="alert-dialog-title"
                 aria-describedby="alert-dialog-description"
               >
-                <DialogTitle id="alert-dialog-title">
-                  {"Submit Report"}
-                </DialogTitle>
+                <DialogTitle id="alert-dialog-title">Submit Report</DialogTitle>
                 <DialogContent>
                   <DialogContentText id="alert-dialog-description">
                     {message}
