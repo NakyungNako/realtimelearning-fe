@@ -4,7 +4,7 @@ import UserInfo from "./UserInfo";
 
 export default function Sidebar() {
   return (
-    <Box flex={2}>
+    <Box flex={1}>
       <UserInfo />
       <Divider />
       <GroupList />

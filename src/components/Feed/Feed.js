@@ -6,7 +6,7 @@ import FeedInfo from "./FeedInfo";
 export default function Feed() {
   const { selectedGroup } = useAuth();
   return selectedGroup ? (
-    <Box flex={4} style={{ minHeight: "90vh" }}>
+    <Box flex={2} style={{ minHeight: "90vh" }}>
       <FeedHeader />
       <Divider />
       <FeedInfo />
@@ -14,7 +14,7 @@ export default function Feed() {
   ) : (
     <Box
       display="flex"
-      flex={4}
+      flex={5}
       justifyContent="center"
       alignItems="center"
       minHeight="90vh"

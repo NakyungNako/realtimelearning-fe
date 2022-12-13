@@ -7,6 +7,8 @@ export function AuthProvider({ children }) {
   const [auth, setAuth] = useState({});
   const [selectedGroup, setSelectedGroup] = useState();
   const [groups, setGroups] = useState();
+  const [present, setPresent] = useState({});
+  const [selectedSlide, setSelectedSlide] = useState();
   const [persist, setPersist] = useState(
     JSON.parse(localStorage.getItem("persist")) || false
   );
@@ -23,6 +25,10 @@ export function AuthProvider({ children }) {
         setSelectedGroup,
         groups,
         setGroups,
+        present,
+        setPresent,
+        selectedSlide,
+        setSelectedSlide,
       }}
     >
       {children}
