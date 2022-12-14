@@ -62,7 +62,7 @@ export default function FeedHeader() {
 
   return (
     <Stack direction="row" p={2}>
-      <Stack direction="column" justifyContent="flex-start" flex={4}>
+      <Stack direction="column" justifyContent="flex-start" flex={3}>
         <Typography variant="h5" sx={{ fontWeight: "bold" }}>
           {selectedGroup.groupname}
         </Typography>
@@ -74,7 +74,6 @@ export default function FeedHeader() {
             color="secondary"
             onClick={() => handleAddMember(selectedGroup._id)}
             startIcon={<PersonAdd />}
-            sx={{ mr: 1 }}
           >
             Add Member
           </Button>

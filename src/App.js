@@ -11,6 +11,7 @@ import LoggedNavBar from "./components/NavBar/LoggedNavBar";
 import Main from "./components/Main";
 import EmailVerification from "./components/EmailVerification";
 import JoinGroup from "./components/JoinGroup";
+import EditPresentation from "./components/Presentation/EditPresentation/EditPresentation";
 
 function App() {
   const { auth } = useAuth();
@@ -36,6 +37,7 @@ function App() {
               exact
               element={<JoinGroup />}
             />
+            <Route path="/edit/:groupId" exact element={<EditPresentation />} />
           </Route>
         </Route>
 
