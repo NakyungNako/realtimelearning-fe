@@ -5,7 +5,7 @@ import useAuth from "../../../hooks/useAuth";
 import useAxiosPrivate from "../../../hooks/useAxiosPrivate";
 
 export default function EditHeader() {
-  const { present, setPresent, setSelectedSlide } = useAuth();
+  const { present, setPresent, setSelectedSlide, selectedSlide } = useAuth();
   const axiosPrivate = useAxiosPrivate();
   const navigate = useNavigate();
 
@@ -32,6 +32,20 @@ export default function EditHeader() {
     setSelectedSlide();
     navigate("/", { replace: true });
   };
+
+  const handleViewPresent = () => {
+    // socket.emit("send_message", { message: "hello" });
+    const slideAnswers = selectedSlide.answers.map((an) => ({
+      ...an,
+      total: 0,
+    }));
+    setSelectedSlide((oldSlide) => ({
+      ...oldSlide,
+      answers: slideAnswers,
+    }));
+    navigate(`/slideshow/${selectedSlide._id}`, { replace: true });
+  };
+
   return (
     <Grid
       container
@@ -61,7 +75,12 @@ export default function EditHeader() {
         >
           Save
         </Button>
-        <Button variant="contained" color="info" endIcon={<PlayArrow />}>
+        <Button
+          variant="contained"
+          color="info"
+          onClick={handleViewPresent}
+          endIcon={<PlayArrow />}
+        >
           Present
         </Button>
       </Grid>
