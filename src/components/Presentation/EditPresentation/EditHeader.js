@@ -35,6 +35,9 @@ export default function EditHeader() {
 
   const handleViewPresent = () => {
     // socket.emit("send_message", { message: "hello" });
+    const index = present.slides.findIndex(
+      (el) => el._id === selectedSlide._id
+    );
     const slideAnswers = selectedSlide.answers.map((an) => ({
       ...an,
       total: 0,
@@ -43,7 +46,10 @@ export default function EditHeader() {
       ...oldSlide,
       answers: slideAnswers,
     }));
-    navigate(`/slideshow/${selectedSlide._id}`, { replace: true });
+    navigate(`/slideshow/${selectedSlide._id}`, {
+      replace: true,
+      state: { index },
+    });
   };
 
   return (

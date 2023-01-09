@@ -14,6 +14,7 @@ import JoinGroup from "./components/JoinGroup";
 import EditPresentation from "./components/Presentation/EditPresentation/EditPresentation";
 import ShowPresentation from "./components/Presentation/EditPresentation/ShowPresentation";
 import JoinRoom from "./components/JoinRoom";
+import PresentViewer from "./components/PresentViewer";
 
 function App() {
   const { auth } = useAuth();
@@ -28,7 +29,6 @@ function App() {
           exact
           element={<EmailVerification />}
         />
-        <Route path="/roomjoining" exact element={<JoinRoom />} />
 
         {/* protected routes */}
         <Route element={<PersistLogin />}>
@@ -46,6 +46,8 @@ function App() {
               exact
               element={<ShowPresentation />}
             />
+            <Route path="/roomjoining" exact element={<JoinRoom />} />
+            <Route path="/presentViewer" exact element={<PresentViewer />} />
           </Route>
         </Route>
 
