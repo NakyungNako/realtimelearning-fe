@@ -1,20 +1,37 @@
-import { ArrowBack, ArrowForward } from "@mui/icons-material";
-import { Box, IconButton, Stack, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
+import { ArrowBack, ArrowForward, ChatBubble, Send } from "@mui/icons-material";
+import {
+  Box,
+  CircularProgress,
+  Fab,
+  IconButton,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from "recharts";
 import io from "socket.io-client";
 // import randomstring from "randomstring";
 import { SOCKET_URL } from "../../../config/config";
 import useAuth from "../../../hooks/useAuth";
+import useAxiosPrivate from "../../../hooks/useAxiosPrivate";
+import ScrollableChat from "./Chat/ScrollableChat";
 
 const socket = io.connect(SOCKET_URL);
 
 export default function ShowPresentation() {
-  const { selectedSlide, setSelectedSlide, present, setPresent } = useAuth();
+  const { selectedSlide, setSelectedSlide, present, setPresent, auth } =
+    useAuth();
   const roomCode = present.presentationId;
   const location = useLocation();
   const [index, setIndex] = useState(structuredClone(location.state.index));
+  const [viewMessage, setViewMessage] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const axiosPrivate = useAxiosPrivate();
+  const messagesEndRef = useRef(null);
 
   //   const roomCode = randomstring.generate({
   //     length: 8,
@@ -45,7 +62,15 @@ export default function ShowPresentation() {
         });
       }
     });
+    // socket.on("received_chat", (data) => {
+    //   console.log(data.message);
+    //   setMessages([...messages, data.message]);
+    // });
   }, [selectedSlide]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView();
+  }, [messages]);
 
   useEffect(() => {
     socket.on("receive_data", (data) => {
@@ -65,8 +90,40 @@ export default function ShowPresentation() {
   //     });
   //   }, [socket]);
   // console.log(selectedSlide.answers);
+  const fetchMessages = async () => {
+    try {
+      setLoading(true);
+
+      const response = await axiosPrivate.post("/api/message/getMessages", {
+        chatName: roomCode,
+      });
+      setMessages(response.data);
+      setLoading(false);
+      console.log(messages);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchMessages();
+  }, []);
+
   const handlePrevSlide = () => {
-    console.log("previous slide");
+    const slides = structuredClone(present.slides);
+    const newSlides = slides.map((slide) => {
+      if (slide._id === selectedSlide._id) {
+        return selectedSlide;
+      }
+      return slide;
+    });
+    setPresent((pre) => ({ ...pre, slides: newSlides }));
+    setIndex(index - 1);
+    setSelectedSlide(slides[index - 1]);
+    socket.emit("send_refresh", {
+      message: roomCode,
+      room: roomCode,
+    });
   };
 
   const handleNextSlide = () => {
@@ -80,10 +137,42 @@ export default function ShowPresentation() {
     setPresent((pre) => ({ ...pre, slides: newSlides }));
     setIndex(index + 1);
     setSelectedSlide(slides[index + 1]);
-    socket.emit("send_message", {
+    socket.emit("send_refresh", {
       message: roomCode,
       room: roomCode,
     });
+  };
+
+  const handleOpenMessage = () => {
+    setViewMessage(!viewMessage);
+  };
+
+  const sendMessage = async (event) => {
+    if (event.key === "Enter" && newMessage) {
+      setNewMessage("");
+      const response = await axiosPrivate.post("/api/message", {
+        content: newMessage,
+        userId: auth.id,
+        chatName: roomCode,
+      });
+      socket.emit("new message", { chat: response.data, room: roomCode });
+      setMessages([...messages, response.data]);
+    }
+  };
+
+  useEffect(() => {
+    socket.on("message recieved", (newMessageRecieved) => {
+      if (
+        messages.findIndex((el) => el._id === newMessageRecieved.chat._id) ===
+        -1
+      ) {
+        setMessages([...messages, newMessageRecieved.chat]);
+      }
+    });
+  });
+
+  const typingHandler = (e) => {
+    setNewMessage(e.target.value);
   };
 
   return (
@@ -98,13 +187,15 @@ export default function ShowPresentation() {
           alignItems: "center",
         }}
       >
-        <IconButton
-          size="large"
-          sx={{ boxShadow: 3, m: 2 }}
-          onClick={handlePrevSlide}
-        >
-          <ArrowBack fontSize="inherit" />
-        </IconButton>
+        {index > 0 && (
+          <IconButton
+            size="large"
+            sx={{ boxShadow: 3, m: 2 }}
+            onClick={handlePrevSlide}
+          >
+            <ArrowBack fontSize="inherit" />
+          </IconButton>
+        )}
       </Box>
       <Box
         sx={{
@@ -161,6 +252,89 @@ export default function ShowPresentation() {
           </IconButton>
         )}
       </Box>
+      {viewMessage && (
+        <Box
+          sx={{
+            bgcolor: "#E8E8E8",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "flex-end",
+            flex: 5,
+            width: "100%",
+            height: "90vh",
+            alignItems: "center",
+            overflowY: "hidden",
+            paddingLeft: 2,
+          }}
+        >
+          {loading ? (
+            <CircularProgress />
+          ) : (
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                overflowY: "scroll",
+                scrollbarWidth: "none",
+                marginTop: 2,
+                height: "100%",
+                width: "100%",
+              }}
+            >
+              <ScrollableChat messages={messages} />
+              <div ref={messagesEndRef} />
+            </Box>
+          )}
+
+          <Box
+            sx={{
+              flexDirection: "row",
+              display: "flex",
+              alignContent: "center",
+              width: "100%",
+              marginBottom: 2,
+            }}
+          >
+            <Box sx={{ display: "flex", flex: "5", paddingLeft: 3 }}>
+              <TextField
+                required
+                sx={{ bgcolor: "white" }}
+                color="secondary"
+                id="outlined-required"
+                value={newMessage}
+                fullWidth
+                onChange={typingHandler}
+                onKeyDown={sendMessage}
+              />
+            </Box>
+            <Box sx={{ display: "flex", flex: "1" }}>
+              <IconButton
+                color="primary"
+                aria-label="send"
+                size="large"
+                onClick={sendMessage}
+              >
+                <Send />
+              </IconButton>
+            </Box>
+          </Box>
+        </Box>
+      )}
+      <Fab
+        color="primary"
+        aria-label="add"
+        style={{
+          margin: 20,
+          top: "auto",
+          left: 20,
+          bottom: 20,
+          right: "auto",
+          position: "fixed",
+        }}
+        onClick={handleOpenMessage}
+      >
+        <ChatBubble />
+      </Fab>
     </Stack>
   );
 }

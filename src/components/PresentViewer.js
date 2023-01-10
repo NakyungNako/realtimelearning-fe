@@ -3,52 +3,103 @@ import { useLocation } from "react-router-dom";
 import {
   Box,
   Button,
+  Checkbox,
+  CircularProgress,
+  Fab,
   FormControl,
   FormControlLabel,
-  Grid,
-  Radio,
-  RadioGroup,
+  FormGroup,
+  IconButton,
+  TextField,
+  // Radio,
+  // RadioGroup,
   Typography,
 } from "@mui/material";
 import randomstring from "randomstring";
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from "recharts";
 import io from "socket.io-client";
+import { ChatBubble, Send } from "@mui/icons-material";
 import { SOCKET_URL } from "../config/config";
+import ScrollableChat from "./Presentation/EditPresentation/Chat/ScrollableChat";
+import useAxiosPrivate from "../hooks/useAxiosPrivate";
+import useAuth from "../hooks/useAuth";
 
 const socket = io.connect(SOCKET_URL);
 
 export default function PresentViewer() {
   const location = useLocation();
+  const { auth } = useAuth();
+  const [viewMessage, setViewMessage] = useState(false);
   const [isSubmit, setIsSubmit] = useState(false);
   const [slideData, setSlideData] = useState();
-  const [ansValue, setAnsValue] = useState("");
+  const [isChecked, setIsChecked] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const axiosPrivate = useAxiosPrivate();
+  // const [ansValue, setAnsValue] = useState("");
   const valueCode = location.state?.valueCode;
+  let isSent = false;
+
+  const fetchMessages = async () => {
+    try {
+      setLoading(true);
+
+      const response = await axiosPrivate.post("/api/message/getMessages", {
+        chatName: valueCode,
+      });
+      setMessages(response.data);
+      setLoading(false);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   useEffect(() => {
+    fetchMessages();
     socket.emit("join_room", valueCode);
     socket.emit("send_message", { message: valueCode, room: valueCode });
   }, []);
+
+  // useEffect(() => {
+  //   socket.on("receive_data", (data) => {
+  //     setSlideData(data.slide);
+  //     if (!isSent) {
+  //       setIsChecked(data.slide.answers.slice().fill(false));
+  //       isSent = true;
+  //       console.log(data.slide.answers);
+  //     }
+  //   });
+  // }, [isSent]);
+  useEffect(() => {
+    if (!isSent && slideData != null) {
+      setIsChecked(slideData.answers.slice().fill(false));
+      isSent = true;
+    }
+  }, [slideData]);
 
   useEffect(() => {
     socket.on("receive_data", (data) => {
       setSlideData(data.slide);
     });
-    socket.on("receive_message", (data) => {
+    socket.on("receive_refresh", (data) => {
       if (data.message === valueCode) {
+        console.log("aloalo");
         setIsSubmit(false);
+        isSent = false;
         socket.emit("send_message", { message: valueCode, room: valueCode });
       }
     });
   }, [socket]);
 
-  const ansChange = (event) => {
-    setAnsValue(event.target.value);
-  };
+  // const ansChange = (event) => {
+  //   setAnsValue(event.target.value);
+  // };
 
   const handleSubmit = () => {
     const tempSlide = slideData;
-    const slideAnswers = slideData.answers.map((an) => {
-      if (an.answer === ansValue) {
+    const slideAnswers = slideData.answers.map((an, index) => {
+      if (isChecked[index] === true) {
         return {
           ...an,
           total: an.total + 1,
@@ -68,26 +119,65 @@ export default function PresentViewer() {
     }));
   };
 
+  const toggleCheckboxValue = (index) => {
+    setIsChecked(isChecked.map((v, i) => (i === index ? !v : v)));
+  };
+
+  const handleOpenMessage = () => {
+    setViewMessage(!viewMessage);
+  };
+
+  const sendMessage = async (event) => {
+    if (event.key === "Enter" && newMessage) {
+      setNewMessage("");
+      const response = await axiosPrivate.post("/api/message", {
+        content: newMessage,
+        userId: auth.id,
+        chatName: valueCode,
+      });
+      socket.emit("new message", { chat: response.data, room: valueCode });
+      setMessages([...messages, response.data]);
+    }
+  };
+
+  useEffect(() => {
+    socket.on("message recieved", (newMessageRecieved) => {
+      if (
+        messages.findIndex((el) => el._id === newMessageRecieved.chat._id) ===
+        -1
+      ) {
+        setMessages([...messages, newMessageRecieved.chat]);
+      }
+    });
+  });
+
+  const typingHandler = (e) => {
+    setNewMessage(e.target.value);
+  };
+
   return (
     slideData && (
-      <Grid
-        container
-        spacing={0}
-        direction="column"
-        alignItems="center"
-        justifyContent="center"
-        style={{ minHeight: "90vh" }}
-      >
-        {isSubmit && (
-          <ResponsiveContainer width="50%" aspect={3}>
-            <BarChart data={slideData.answers}>
-              <XAxis dataKey="answer" />
-              <Tooltip />
-              <Bar dataKey="total" fill="#499df2" />
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-        <Box sx={{ display: "flex", justifyContent: "center" }}>
+      <Box sx={{ display: "flex", direction: "row" }}>
+        <Box
+          sx={{
+            flex: "5",
+            display: "flex",
+            width: "100%",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            marginY: 20,
+          }}
+        >
+          {isSubmit && (
+            <ResponsiveContainer width="50%" aspect={3}>
+              <BarChart data={slideData.answers}>
+                <XAxis dataKey="answer" />
+                <Tooltip />
+                <Bar dataKey="total" fill="#499df2" />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
           <Typography
             variant="h2"
             sx={{
@@ -99,10 +189,10 @@ export default function PresentViewer() {
           >
             {slideData.question}
           </Typography>
-        </Box>
-        <Box sx={{ width: "20%", display: "flex", flexDirection: "column" }}>
-          <FormControl>
-            <RadioGroup value={ansValue} onChange={ansChange}>
+
+          <Box sx={{ width: "20%", flexDirection: "column" }}>
+            <FormControl>
+              {/* <RadioGroup value={ansValue} onChange={ansChange}>
               {slideData.answers.map((ans) => (
                 <FormControlLabel
                   disabled={isSubmit}
@@ -112,19 +202,120 @@ export default function PresentViewer() {
                   key={randomstring.generate(7)}
                 />
               ))}
-            </RadioGroup>
-          </FormControl>
-          <Box sx={{ display: "flex", justifyContent: "center", m: 2 }}>
-            <Button
-              variant="contained"
-              onClick={handleSubmit}
-              disabled={isSubmit}
-            >
-              Submit
-            </Button>
+            </RadioGroup> */}
+              <FormGroup>
+                {slideData.answers.map((ans, index) => (
+                  <FormControlLabel
+                    disabled={isSubmit}
+                    value={ans.answer}
+                    control={
+                      <Checkbox
+                        checked={isChecked[index]}
+                        onClick={() => toggleCheckboxValue(index)}
+                        name="gilad"
+                      />
+                    }
+                    label={ans.answer}
+                    key={randomstring.generate(7)}
+                  />
+                ))}
+              </FormGroup>
+            </FormControl>
+            <Box sx={{ display: "flex", justifyContent: "center", m: 2 }}>
+              <Button
+                variant="contained"
+                onClick={handleSubmit}
+                disabled={isSubmit}
+              >
+                Submit
+              </Button>
+            </Box>
           </Box>
         </Box>
-      </Grid>
+
+        {viewMessage && (
+          <Box
+            sx={{
+              bgcolor: "#E8E8E8",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "flex-end",
+              flex: "2",
+              width: "100%",
+              height: "92vh",
+              alignItems: "center",
+              overflowY: "hidden",
+              paddingLeft: 2,
+            }}
+          >
+            {loading ? (
+              <CircularProgress />
+            ) : (
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  overflowY: "scroll",
+                  scrollbarWidth: "none",
+                  marginTop: 2,
+                  height: "100%",
+                  width: "100%",
+                }}
+              >
+                <ScrollableChat messages={messages} />
+              </Box>
+            )}
+
+            <Box
+              sx={{
+                flexDirection: "row",
+                display: "flex",
+                alignContent: "center",
+                width: "100%",
+                marginBottom: 2,
+              }}
+            >
+              <Box sx={{ display: "flex", flex: "5", paddingLeft: 3 }}>
+                <TextField
+                  required
+                  sx={{ bgcolor: "white" }}
+                  color="secondary"
+                  id="outlined-required"
+                  value={newMessage}
+                  fullWidth
+                  onChange={typingHandler}
+                  onKeyDown={sendMessage}
+                />
+              </Box>
+              <Box sx={{ display: "flex", flex: "1" }}>
+                <IconButton
+                  color="primary"
+                  aria-label="send"
+                  size="large"
+                  onClick={sendMessage}
+                >
+                  <Send />
+                </IconButton>
+              </Box>
+            </Box>
+          </Box>
+        )}
+        <Fab
+          color="primary"
+          aria-label="add"
+          style={{
+            margin: 20,
+            top: "auto",
+            left: 20,
+            bottom: 20,
+            right: "auto",
+            position: "fixed",
+          }}
+          onClick={handleOpenMessage}
+        >
+          <ChatBubble />
+        </Fab>
+      </Box>
     )
   );
 }

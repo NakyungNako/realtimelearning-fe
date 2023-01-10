@@ -58,6 +58,8 @@ export default function JoinRoom() {
     console.log(response.data.message);
     if (response.data.message === true || response.data.message === "public") {
       navigate("/presentViewer", { state: { valueCode } });
+    } else {
+      setOpen(true);
     }
   };
 
@@ -76,7 +78,6 @@ export default function JoinRoom() {
   //       });
   //     }
   //   }, [setSlideData]);
-
   return (
     <Grid
       container
@@ -95,7 +96,7 @@ export default function JoinRoom() {
         open={open}
         autoHideDuration={6000}
         onClose={handleClose}
-        message="Wrong Code, please try again"
+        message="You do not have permission to join this room"
       />
     </Grid>
   );
