@@ -1,5 +1,7 @@
-import { Box, Typography } from "@mui/material";
-import { useEffect } from "react";
+import { ArrowBack, ArrowForward } from "@mui/icons-material";
+import { Box, IconButton, Stack, Typography } from "@mui/material";
+import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from "recharts";
 import io from "socket.io-client";
 // import randomstring from "randomstring";
@@ -9,8 +11,10 @@ import useAuth from "../../../hooks/useAuth";
 const socket = io.connect(SOCKET_URL);
 
 export default function ShowPresentation() {
-  const { selectedSlide, setSelectedSlide, present } = useAuth();
+  const { selectedSlide, setSelectedSlide, present, setPresent } = useAuth();
   const roomCode = present.presentationId;
+  const location = useLocation();
+  const [index, setIndex] = useState(structuredClone(location.state.index));
 
   //   const roomCode = randomstring.generate({
   //     length: 8,
@@ -61,40 +65,102 @@ export default function ShowPresentation() {
   //     });
   //   }, [socket]);
   // console.log(selectedSlide.answers);
+  const handlePrevSlide = () => {
+    console.log("previous slide");
+  };
+
+  const handleNextSlide = () => {
+    const slides = structuredClone(present.slides);
+    const newSlides = slides.map((slide) => {
+      if (slide._id === selectedSlide._id) {
+        return selectedSlide;
+      }
+      return slide;
+    });
+    setPresent((pre) => ({ ...pre, slides: newSlides }));
+    setIndex(index + 1);
+    setSelectedSlide(slides[index + 1]);
+    socket.emit("send_message", {
+      message: roomCode,
+      room: roomCode,
+    });
+  };
+
   return (
-    <Box
-      sx={{
-        backgroundColor: "white",
-        display: "flex",
-        width: "100%",
-        height: "100%",
-        flexDirection: "column",
-        alignItems: "center",
-      }}
-    >
-      <Typography
-        variant="h2"
+    <Stack direction="row" spacing={2} justifyContent="space-between">
+      <Box
         sx={{
-          marginX: 7,
-          marginBottom: 3,
-          fontWeight: 400,
-          wordBreak: "break-word",
+          backgroundColor: "white",
+          display: "flex",
+          flex: 1,
+          width: "100%",
+          height: "90vh",
+          alignItems: "center",
         }}
       >
-        {selectedSlide?.question}
-      </Typography>
-      <ResponsiveContainer width="70%" aspect={2}>
-        <BarChart data={selectedSlide.answers}>
-          <XAxis dataKey="answer" />
-          <Tooltip />
-          <Bar dataKey="total" fill="#499df2" />
-        </BarChart>
-      </ResponsiveContainer>
-      <Box sx={{ position: "absolute", bottom: 30 }}>
-        <Typography variant="h4" sx={{ fontWeight: 300 }}>
-          Room Code: {roomCode}
-        </Typography>
+        <IconButton
+          size="large"
+          sx={{ boxShadow: 3, m: 2 }}
+          onClick={handlePrevSlide}
+        >
+          <ArrowBack fontSize="inherit" />
+        </IconButton>
       </Box>
-    </Box>
+      <Box
+        sx={{
+          backgroundColor: "white",
+          display: "flex",
+          flex: 15,
+          width: "100%",
+          height: "100%",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        <Typography
+          variant="h2"
+          sx={{
+            marginX: 7,
+            marginBottom: 3,
+            fontWeight: 400,
+            wordBreak: "break-word",
+          }}
+        >
+          {selectedSlide?.question}
+        </Typography>
+        <ResponsiveContainer width="70%" aspect={2}>
+          <BarChart data={selectedSlide.answers}>
+            <XAxis dataKey="answer" />
+            <Tooltip />
+            <Bar dataKey="total" fill="#499df2" />
+          </BarChart>
+        </ResponsiveContainer>
+        <Box sx={{ position: "absolute", bottom: 30 }}>
+          <Typography variant="h4" sx={{ fontWeight: 300 }}>
+            Room Code: {roomCode}
+          </Typography>
+        </Box>
+      </Box>
+      <Box
+        sx={{
+          backgroundColor: "white",
+          display: "flex",
+          flex: 1,
+          width: "100%",
+          height: "90vh",
+          alignItems: "center",
+        }}
+      >
+        {index + 1 < present.slides.length && (
+          <IconButton
+            size="large"
+            sx={{ boxShadow: 3, m: 2 }}
+            onClick={handleNextSlide}
+          >
+            <ArrowForward fontSize="inherit" />
+          </IconButton>
+        )}
+      </Box>
+    </Stack>
   );
 }
