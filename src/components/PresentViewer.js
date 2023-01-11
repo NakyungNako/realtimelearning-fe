@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import {
+  Badge,
   Box,
   Button,
   Checkbox,
@@ -19,6 +20,8 @@ import randomstring from "randomstring";
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from "recharts";
 import io from "socket.io-client";
 import { ChatBubble, Send } from "@mui/icons-material";
+import Lottie from "lottie-react";
+import animationData from "../animation/typing.json";
 import { SOCKET_URL } from "../config/config";
 import ScrollableChat from "./Presentation/EditPresentation/Chat/ScrollableChat";
 import useAxiosPrivate from "../hooks/useAxiosPrivate";
@@ -36,7 +39,14 @@ export default function PresentViewer() {
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
+  const [receive, setReceive] = useState("");
+  const [typing, setTyping] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [notification, setNotification] = useState(0);
+  const [question, setQuestion] = useState(false);
+  const [newQuestion, setNewQuestion] = useState("");
   const axiosPrivate = useAxiosPrivate();
+  const messagesEndRef = useRef(null);
   // const [ansValue, setAnsValue] = useState("");
   const valueCode = location.state?.valueCode;
   let isSent = false;
@@ -59,8 +69,17 @@ export default function PresentViewer() {
     fetchMessages();
     socket.emit("join_room", valueCode);
     socket.emit("send_message", { message: valueCode, room: valueCode });
+    socket.on("typing", () => setIsTyping(true));
+    socket.on("stop typing", () => setIsTyping(false));
   }, []);
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView();
+    if (!viewMessage && messages.length !== 0 && receive !== "") {
+      console.log(messages[messages.length - 1].content, receive);
+      setNotification(notification + 0.5);
+    }
+  }, [messages]);
   // useEffect(() => {
   //   socket.on("receive_data", (data) => {
   //     setSlideData(data.slide);
@@ -84,10 +103,13 @@ export default function PresentViewer() {
     });
     socket.on("receive_refresh", (data) => {
       if (data.message === valueCode) {
-        console.log("aloalo");
         setIsSubmit(false);
         isSent = false;
         socket.emit("send_message", { message: valueCode, room: valueCode });
+        if (question) setQuestion(false);
+      } else {
+        setIsSubmit(false);
+        setQuestion(true);
       }
     });
   }, [socket]);
@@ -124,11 +146,13 @@ export default function PresentViewer() {
   };
 
   const handleOpenMessage = () => {
+    setNotification(0);
     setViewMessage(!viewMessage);
   };
 
   const sendMessage = async (event) => {
     if (event.key === "Enter" && newMessage) {
+      socket.emit("stop typing", valueCode);
       setNewMessage("");
       const response = await axiosPrivate.post("/api/message", {
         content: newMessage,
@@ -146,6 +170,7 @@ export default function PresentViewer() {
         messages.findIndex((el) => el._id === newMessageRecieved.chat._id) ===
         -1
       ) {
+        setReceive(newMessageRecieved.chat.content);
         setMessages([...messages, newMessageRecieved.chat]);
       }
     });
@@ -153,6 +178,29 @@ export default function PresentViewer() {
 
   const typingHandler = (e) => {
     setNewMessage(e.target.value);
+
+    if (!typing) {
+      setTyping(true);
+      socket.emit("typing", valueCode);
+    }
+    const lastTypingTime = new Date().getTime();
+    const timerLength = 2000;
+    setTimeout(() => {
+      const timeNow = new Date().getTime();
+      const timeDiff = timeNow - lastTypingTime;
+      if (timeDiff >= timerLength && typing) {
+        socket.emit("stop typing", valueCode);
+        setTyping(false);
+      }
+    }, timerLength);
+  };
+
+  const questionHandler = (e) => {
+    setNewQuestion(e.target.value);
+  };
+
+  const handleQuestion = () => {
+    socket.emit("send_question", { question: newQuestion, room: valueCode });
   };
 
   return (
@@ -189,10 +237,22 @@ export default function PresentViewer() {
           >
             {slideData.question}
           </Typography>
-
-          <Box sx={{ width: "20%", flexDirection: "column" }}>
-            <FormControl>
-              {/* <RadioGroup value={ansValue} onChange={ansChange}>
+          {question ? (
+            <Box sx={{ display: "flex", flexDirection: "column" }}>
+              <TextField
+                id="outlined-basic"
+                sx={{ padding: 2 }}
+                value={newQuestion}
+                onChange={questionHandler}
+              />
+              <Button variant="outlined" onClick={handleQuestion}>
+                Add Question
+              </Button>
+            </Box>
+          ) : (
+            <Box sx={{ width: "20%", flexDirection: "column" }}>
+              <FormControl>
+                {/* <RadioGroup value={ansValue} onChange={ansChange}>
               {slideData.answers.map((ans) => (
                 <FormControlLabel
                   disabled={isSubmit}
@@ -203,34 +263,35 @@ export default function PresentViewer() {
                 />
               ))}
             </RadioGroup> */}
-              <FormGroup>
-                {slideData.answers.map((ans, index) => (
-                  <FormControlLabel
-                    disabled={isSubmit}
-                    value={ans.answer}
-                    control={
-                      <Checkbox
-                        checked={isChecked[index]}
-                        onClick={() => toggleCheckboxValue(index)}
-                        name="gilad"
-                      />
-                    }
-                    label={ans.answer}
-                    key={randomstring.generate(7)}
-                  />
-                ))}
-              </FormGroup>
-            </FormControl>
-            <Box sx={{ display: "flex", justifyContent: "center", m: 2 }}>
-              <Button
-                variant="contained"
-                onClick={handleSubmit}
-                disabled={isSubmit}
-              >
-                Submit
-              </Button>
+                <FormGroup>
+                  {slideData.answers.map((ans, index) => (
+                    <FormControlLabel
+                      disabled={isSubmit}
+                      value={ans.answer}
+                      control={
+                        <Checkbox
+                          checked={isChecked[index]}
+                          onClick={() => toggleCheckboxValue(index)}
+                          name="gilad"
+                        />
+                      }
+                      label={ans.answer}
+                      key={randomstring.generate(7)}
+                    />
+                  ))}
+                </FormGroup>
+              </FormControl>
+              <Box sx={{ display: "flex", justifyContent: "center", m: 2 }}>
+                <Button
+                  variant="contained"
+                  onClick={handleSubmit}
+                  disabled={isSubmit}
+                >
+                  Submit
+                </Button>
+              </Box>
             </Box>
-          </Box>
+          )}
         </Box>
 
         {viewMessage && (
@@ -243,7 +304,6 @@ export default function PresentViewer() {
               flex: "2",
               width: "100%",
               height: "92vh",
-              alignItems: "center",
               overflowY: "hidden",
               paddingLeft: 2,
             }}
@@ -256,14 +316,19 @@ export default function PresentViewer() {
                   display: "flex",
                   flexDirection: "column",
                   overflowY: "scroll",
-                  scrollbarWidth: "none",
                   marginTop: 2,
+                  marginBottom: 1,
                   height: "100%",
                   width: "100%",
                 }}
               >
                 <ScrollableChat messages={messages} />
+                <div ref={messagesEndRef} />
               </Box>
+            )}
+
+            {isTyping && (
+              <Lottie animationData={animationData} style={{ width: 50 }} />
             )}
 
             <Box
@@ -300,21 +365,33 @@ export default function PresentViewer() {
             </Box>
           </Box>
         )}
-        <Fab
-          color="primary"
-          aria-label="add"
-          style={{
-            margin: 20,
+        <Badge
+          badgeContent={notification}
+          color="secondary"
+          sx={{
             top: "auto",
-            left: 20,
-            bottom: 20,
+            left: 100,
+            bottom: 95,
             right: "auto",
             position: "fixed",
           }}
-          onClick={handleOpenMessage}
         >
-          <ChatBubble />
-        </Fab>
+          <Fab
+            color="primary"
+            aria-label="add"
+            style={{
+              margin: 20,
+              top: "auto",
+              left: 20,
+              bottom: 20,
+              right: "auto",
+              position: "fixed",
+            }}
+            onClick={handleOpenMessage}
+          >
+            <ChatBubble />
+          </Fab>
+        </Badge>
       </Box>
     )
   );

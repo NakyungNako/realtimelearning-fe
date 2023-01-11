@@ -1,8 +1,13 @@
+/* eslint-disable react/no-array-index-key */
 import { ArrowBack, ArrowForward, ChatBubble, Send } from "@mui/icons-material";
 import {
+  Badge,
   Box,
+  Checkbox,
   CircularProgress,
   Fab,
+  FormControlLabel,
+  FormGroup,
   IconButton,
   Stack,
   TextField,
@@ -13,6 +18,8 @@ import { useLocation } from "react-router-dom";
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from "recharts";
 import io from "socket.io-client";
 // import randomstring from "randomstring";
+import Lottie from "lottie-react";
+import animationData from "../../../animation/typing.json";
 import { SOCKET_URL } from "../../../config/config";
 import useAuth from "../../../hooks/useAuth";
 import useAxiosPrivate from "../../../hooks/useAxiosPrivate";
@@ -30,8 +37,21 @@ export default function ShowPresentation() {
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
+  const [receive, setReceive] = useState("");
+  const [typing, setTyping] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [notification, setNotification] = useState(0);
   const axiosPrivate = useAxiosPrivate();
   const messagesEndRef = useRef(null);
+  const [question, setQuestion] = useState(false);
+  const [questionList, setQuestionList] = useState([]);
+
+  // const defaultOptions = {
+  //   loop: true,
+  //   autoplay: true,
+  //   // eslint-disable-next-line object-shorthand
+  //   animationData: animationData,
+  // };
 
   //   const roomCode = randomstring.generate({
   //     length: 8,
@@ -40,6 +60,8 @@ export default function ShowPresentation() {
 
   useEffect(() => {
     socket.emit("join_room", roomCode);
+    socket.on("typing", () => setIsTyping(true));
+    socket.on("stop typing", () => setIsTyping(false));
   }, []);
 
   // const joinRoom = () => {
@@ -70,6 +92,10 @@ export default function ShowPresentation() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView();
+    if (!viewMessage && messages.length !== 0 && receive !== "") {
+      console.log(messages[messages.length - 1].content, receive);
+      setNotification(notification + 0.5);
+    }
   }, [messages]);
 
   useEffect(() => {
@@ -99,7 +125,6 @@ export default function ShowPresentation() {
       });
       setMessages(response.data);
       setLoading(false);
-      console.log(messages);
     } catch (error) {
       console.log(error);
     }
@@ -124,31 +149,43 @@ export default function ShowPresentation() {
       message: roomCode,
       room: roomCode,
     });
+    if (question) setQuestion(false);
   };
 
   const handleNextSlide = () => {
-    const slides = structuredClone(present.slides);
-    const newSlides = slides.map((slide) => {
-      if (slide._id === selectedSlide._id) {
-        return selectedSlide;
-      }
-      return slide;
-    });
-    setPresent((pre) => ({ ...pre, slides: newSlides }));
-    setIndex(index + 1);
-    setSelectedSlide(slides[index + 1]);
-    socket.emit("send_refresh", {
-      message: roomCode,
-      room: roomCode,
-    });
+    if (index + 1 < present.slides.length) {
+      const slides = structuredClone(present.slides);
+      const newSlides = slides.map((slide) => {
+        if (slide._id === selectedSlide._id) {
+          return selectedSlide;
+        }
+        return slide;
+      });
+      setPresent((pre) => ({ ...pre, slides: newSlides }));
+      setIndex(index + 1);
+      setSelectedSlide(slides[index + 1]);
+      socket.emit("send_refresh", {
+        message: roomCode,
+        room: roomCode,
+      });
+    } else {
+      setIndex(index + 1);
+      setQuestion(true);
+      socket.emit("send_refresh", {
+        message: questionList,
+        room: roomCode,
+      });
+    }
   };
 
   const handleOpenMessage = () => {
+    setNotification(0);
     setViewMessage(!viewMessage);
   };
 
   const sendMessage = async (event) => {
     if (event.key === "Enter" && newMessage) {
+      socket.emit("stop typing", roomCode);
       setNewMessage("");
       const response = await axiosPrivate.post("/api/message", {
         content: newMessage,
@@ -166,13 +203,32 @@ export default function ShowPresentation() {
         messages.findIndex((el) => el._id === newMessageRecieved.chat._id) ===
         -1
       ) {
+        setReceive(newMessageRecieved.chat.content);
         setMessages([...messages, newMessageRecieved.chat]);
       }
+    });
+    socket.on("receive_question", (data) => {
+      setQuestionList([...questionList, data.question]);
     });
   });
 
   const typingHandler = (e) => {
     setNewMessage(e.target.value);
+
+    if (!typing) {
+      setTyping(true);
+      socket.emit("typing", roomCode);
+    }
+    const lastTypingTime = new Date().getTime();
+    const timerLength = 2000;
+    setTimeout(() => {
+      const timeNow = new Date().getTime();
+      const timeDiff = timeNow - lastTypingTime;
+      if (timeDiff >= timerLength && typing) {
+        socket.emit("stop typing", roomCode);
+        setTyping(false);
+      }
+    }, timerLength);
   };
 
   return (
@@ -197,41 +253,65 @@ export default function ShowPresentation() {
           </IconButton>
         )}
       </Box>
-      <Box
-        sx={{
-          backgroundColor: "white",
-          display: "flex",
-          flex: 15,
-          width: "100%",
-          height: "100%",
-          flexDirection: "column",
-          alignItems: "center",
-        }}
-      >
-        <Typography
-          variant="h2"
+      {question ? (
+        <Box
           sx={{
-            marginX: 7,
-            marginBottom: 3,
-            fontWeight: 400,
-            wordBreak: "break-word",
+            display: "flex",
+            flex: 15,
+            width: "100%",
+            flexDirection: "column",
+            paddingLeft: 30,
+            justifyContent: "center",
           }}
         >
-          {selectedSlide?.question}
-        </Typography>
-        <ResponsiveContainer width="70%" aspect={2}>
-          <BarChart data={selectedSlide.answers}>
-            <XAxis dataKey="answer" />
-            <Tooltip />
-            <Bar dataKey="total" fill="#499df2" />
-          </BarChart>
-        </ResponsiveContainer>
-        <Box sx={{ position: "absolute", bottom: 30 }}>
-          <Typography variant="h4" sx={{ fontWeight: 300 }}>
-            Room Code: {roomCode}
-          </Typography>
+          <FormGroup>
+            {questionList.map((q, i) => (
+              <FormControlLabel
+                control={<Checkbox size="large" />}
+                label={<Typography variant="h3">{q}</Typography>}
+                key={i}
+                sx={{ fontSize: "100" }}
+              />
+            ))}
+          </FormGroup>
         </Box>
-      </Box>
+      ) : (
+        <Box
+          sx={{
+            backgroundColor: "white",
+            display: "flex",
+            flex: 15,
+            width: "100%",
+            height: "100%",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <Typography
+            variant="h2"
+            sx={{
+              marginX: 7,
+              marginBottom: 3,
+              fontWeight: 400,
+              wordBreak: "break-word",
+            }}
+          >
+            {selectedSlide?.question}
+          </Typography>
+          <ResponsiveContainer width="70%" aspect={2}>
+            <BarChart data={selectedSlide.answers}>
+              <XAxis dataKey="answer" />
+              <Tooltip />
+              <Bar dataKey="total" fill="#499df2" />
+            </BarChart>
+          </ResponsiveContainer>
+          <Box sx={{ position: "absolute", bottom: 30 }}>
+            <Typography variant="h4" sx={{ fontWeight: 300 }}>
+              Room Code: {roomCode}
+            </Typography>
+          </Box>
+        </Box>
+      )}
       <Box
         sx={{
           backgroundColor: "white",
@@ -242,7 +322,7 @@ export default function ShowPresentation() {
           alignItems: "center",
         }}
       >
-        {index + 1 < present.slides.length && (
+        {index + 1 <= present.slides.length && (
           <IconButton
             size="large"
             sx={{ boxShadow: 3, m: 2 }}
@@ -262,7 +342,6 @@ export default function ShowPresentation() {
             flex: 5,
             width: "100%",
             height: "90vh",
-            alignItems: "center",
             overflowY: "hidden",
             paddingLeft: 2,
           }}
@@ -275,8 +354,8 @@ export default function ShowPresentation() {
                 display: "flex",
                 flexDirection: "column",
                 overflowY: "scroll",
-                scrollbarWidth: "none",
                 marginTop: 2,
+                marginBottom: 1,
                 height: "100%",
                 width: "100%",
               }}
@@ -284,6 +363,10 @@ export default function ShowPresentation() {
               <ScrollableChat messages={messages} />
               <div ref={messagesEndRef} />
             </Box>
+          )}
+
+          {isTyping && (
+            <Lottie animationData={animationData} style={{ width: 50 }} />
           )}
 
           <Box
@@ -320,21 +403,33 @@ export default function ShowPresentation() {
           </Box>
         </Box>
       )}
-      <Fab
-        color="primary"
-        aria-label="add"
-        style={{
-          margin: 20,
+      <Badge
+        badgeContent={notification}
+        color="secondary"
+        sx={{
           top: "auto",
-          left: 20,
-          bottom: 20,
+          left: 80,
+          bottom: 95,
           right: "auto",
           position: "fixed",
         }}
-        onClick={handleOpenMessage}
       >
-        <ChatBubble />
-      </Fab>
+        <Fab
+          color="primary"
+          aria-label="add"
+          style={{
+            margin: 20,
+            top: "auto",
+            left: 20,
+            bottom: 20,
+            right: "auto",
+            position: "fixed",
+          }}
+          onClick={handleOpenMessage}
+        >
+          <ChatBubble />
+        </Fab>
+      </Badge>
     </Stack>
   );
 }

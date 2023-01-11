@@ -1,13 +1,40 @@
 import { PlayArrow, Save } from "@mui/icons-material";
-import { Button, Grid, TextField } from "@mui/material";
+import {
+  Button,
+  FormControl,
+  FormControlLabel,
+  Grid,
+  Radio,
+  RadioGroup,
+  TextField,
+} from "@mui/material";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../../../hooks/useAuth";
 import useAxiosPrivate from "../../../hooks/useAxiosPrivate";
 
 export default function EditHeader() {
-  const { present, setPresent, setSelectedSlide, selectedSlide } = useAuth();
+  const { present, setPresent, setSelectedSlide, selectedSlide, auth } =
+    useAuth();
   const axiosPrivate = useAxiosPrivate();
   const navigate = useNavigate();
+  const [value, setValue] = useState("public");
+
+  const handleChange = (event) => {
+    if (event.target.value === "public") {
+      setPresent((pre) => ({
+        ...pre,
+        isPrivate: false,
+      }));
+    }
+    if (event.target.value === "private") {
+      setPresent((pre) => ({
+        ...pre,
+        isPrivate: true,
+      }));
+    }
+    setValue(event.target.value);
+  };
 
   const handleTitleChange = (e) => {
     setPresent((pre) => ({
@@ -33,7 +60,7 @@ export default function EditHeader() {
     navigate("/", { replace: true });
   };
 
-  const handleViewPresent = () => {
+  const handleViewPresent = async () => {
     // socket.emit("send_message", { message: "hello" });
     const index = present.slides.findIndex(
       (el) => el._id === selectedSlide._id
@@ -46,6 +73,11 @@ export default function EditHeader() {
       ...oldSlide,
       answers: slideAnswers,
     }));
+    const response = await axiosPrivate.post("/api/chat", {
+      userId: auth.id,
+      chatName: present.presentationId,
+    });
+    console.log(response);
     navigate(`/slideshow/${selectedSlide._id}`, {
       replace: true,
       state: { index },
@@ -66,10 +98,30 @@ export default function EditHeader() {
             id="outlined-size-normal"
             defaultValue={present.title}
             onChange={handleTitleChange}
-            sx={{ width: 500 }}
+            sx={{ width: 500, mr: 5 }}
             inputProps={{ style: { fontWeight: "bold", fontSize: 20 } }}
           />
         )}
+        <FormControl sx={{ mt: 1 }}>
+          <RadioGroup
+            aria-labelledby="demo-controlled-radio-buttons-group"
+            name="controlled-radio-buttons-group"
+            row
+            value={value}
+            onChange={handleChange}
+          >
+            <FormControlLabel
+              value="public"
+              control={<Radio />}
+              label="Public"
+            />
+            <FormControlLabel
+              value="private"
+              control={<Radio />}
+              label="Private"
+            />
+          </RadioGroup>
+        </FormControl>
       </Grid>
       <Grid item>
         <Button
