@@ -83,6 +83,7 @@ export default function SlideInfo() {
       newArr.push({
         answer: "",
         correct: false,
+        total: 0,
       });
       setSelectedSlide((pre) => ({
         ...pre,

@@ -14,6 +14,7 @@ export default function useRefreshToken() {
         ...prev,
         id: response.data.id,
         username: response.data.username,
+        email: response.data.email,
         accessToken: response.data.token,
       };
     });
